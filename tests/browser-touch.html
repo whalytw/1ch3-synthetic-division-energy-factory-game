@@ -1,0 +1,55 @@
+<!doctype html><meta charset="utf-8"><title>觸控回歸測試</title>
+<style>body{font:16px system-ui;margin:12px}pre{white-space:pre-wrap}iframe{width:1280px;height:720px;border:1px solid #888}</style>
+<h1>觸控與完整作答回歸測試</h1><pre id="result">執行中…</pre><iframe id="game" src="../index.html"></iframe>
+<script>
+const frame = document.querySelector('iframe'), log = document.querySelector('#result');
+const results = []; let failed = false;
+function assert(ok, message) { results.push((ok ? 'PASS ' : 'FAIL ') + message); if (!ok) failed = true; }
+frame.addEventListener('load', () => {
+  try {
+    const win = frame.contentWindow, doc = frame.contentDocument;
+    const q = (s) => doc.querySelector(s);
+    let id = 100;
+    function event(button, type, pid, extra = {}) {
+      button.dispatchEvent(new win.PointerEvent(type, { bubbles:true, cancelable:true, pointerId:pid, pointerType:'touch', isPrimary:false, button:0, detail:type === 'click' ? 1 : 0, ...extra }));
+    }
+    function tap(button) { const pid = ++id; event(button,'pointerdown',pid); event(button,'pointerup',pid); event(button,'click',pid); }
+    function key(l, value) { tap(q('#lane-'+l+' [data-key="'+value+'"]')); }
+    for (let l=0;l<3;l++) tap(q('#lane-'+l+' [data-action="demo"]'));
+    const pads = [0,1,2].map(l => q('#lane-'+l+' .keypad'));
+    for (let l=0;l<3;l++) event(q('#lane-'+l+' [data-key="'+(l+1)+'"]'),'pointerdown',l+1);
+    assert([0,1,2].every(l=>q('#lane-'+l+' .entry-display').textContent===String(l+1)), '三人重疊按下立即輸入（含非主要觸點）');
+    for (let l=0;l<3;l++) { const b=q('#lane-'+l+' [data-key="'+(l+1)+'"]'); event(b,'pointerup',l+1);event(b,'click',l+1); }
+    assert([0,1,2].every(l=>q('#lane-'+l+' .entry-display').textContent===String(l+1)), '後續 click 沒有重複輸入');
+    for(let l=0;l<3;l++) key(l,'clear');
+    key(0,'9'); key(0,'enter'); assert(q('#lane-0 .mistake-count').textContent.includes('1 次'),'答錯仍能重試');
+    tap(q('#lane-0 [data-action="hint"]'));
+    assert(pads[0]===q('#lane-0 .keypad'),'答錯和提示保留鍵盤 DOM');
+    const demoTasks=[2,1,0,-4,1,1,2,2,4,0,0,1,1,2,0,1];
+    for(let step=0;step<demoTasks.length;step++) {
+      const value=demoTasks[step];
+      for(let l=0;l<3;l++) {
+        if(value<0)key(l,'sign');for(const digit of String(Math.abs(value)))key(l,digit);
+        key(l,'enter');
+      }
+      if(step<demoTasks.length-1) assert([0,1,2].every(l=>pads[l]===q('#lane-'+l+' .keypad')),'第 '+(step+1)+' 格提交後鍵盤節點穩定');
+      if(step===0 || step===12) {
+        const lanes=[...doc.querySelectorAll('.lane')];
+        assert(lanes.every(el=>el.scrollHeight<=el.clientHeight+1),'1280×720 '+(step===0?'綜合除法表':'商式餘式')+'畫面未裁切');
+        assert([...doc.querySelectorAll('.keypad button')].every(b=>b.getBoundingClientRect().height>=44),'數字鍵至少 44 px');
+      }
+    }
+    assert(doc.querySelectorAll('.question-complete').length===3,'三區均完成 16 格完整綜合除法');
+    assert([...doc.querySelectorAll('.solution-math')].every(e=>e.textContent.includes('r = 1')),'商式與餘式顯示正確');
+    for(let l=0;l<3;l++)tap(q('#lane-'+l+' [data-action="next"]'));
+    assert(doc.querySelectorAll('[data-action="new-player"]').length===3,'三區均可進入回合成果並換人');
+    q('#settings-btn').click();q('#touch-test-btn').click();
+    for(let l=0;l<3;l++)event(q('[data-pad="'+l+'"]'),'pointerdown',l+901);
+    assert(q('#touch-max').textContent==='3','觸控測試可觀察三個同時觸點');
+    for(let l=0;l<3;l++)event(q('[data-pad="'+l+'"]'),'pointercancel',l+901);
+    assert(q('#touch-current').textContent==='0','觸控取消會清理狀態');
+    q('[data-close="touch-dialog"]').click();
+  } catch (e) { failed=true;results.push('ERROR '+e.stack); }
+  log.textContent=(failed?'FAILED':'ALL PASSED')+'\n'+results.join('\n');
+});
+</script>

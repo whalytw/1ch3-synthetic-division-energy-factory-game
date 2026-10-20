@@ -20,4 +20,18 @@ button,input,select{font:inherit}button{cursor:pointer;touch-action:manipulation
 .cell:disabled{opacity:1;cursor:default}
 .cell.locked:disabled{opacity:.5}
 .completed-table-mini{flex-shrink:0;display:flex;justify-content:center;padding:5px 0}
-@media(max-height:760px) and (min-width:651px){.question-label,.stage-track{display:none}.question-card{padding:7px}.table-wrap{padding-top:0}.cell{height:32px}.keypad button{height:32px}.answer-controls .entry-display,.hint-button{height:32px}.completed-table-mini{padding:0}.review-table span{padding:1px}.review-table{font-size:19px}.operation-box{min-height:43px}.mini-footer{line-height:1.1}}
+.work-area{display:contents}
+#lanes button[data-key],#lanes button[data-action],#touch-pads button{touch-action:none}
+#lanes button:active:not(:disabled),#lanes button.touch-pressed:not(:disabled),#touch-pads button.touch-pressed{transform:none;filter:brightness(1.35);box-shadow:inset 0 0 0 2px #d2ffefb0}
+.keypad button{height:clamp(44px,5.2vh,68px);min-height:44px}
+.hint-button,.start-button,.demo-button{min-height:44px}
+.mini-footer{align-items:center}
+.mini-footer button[data-action="leave"]{min-height:32px;min-width:70px}
+.touch-pads{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;touch-action:none;user-select:none}
+.touch-pads button{height:230px;font-size:22px;border:2px solid #5ce1c4;background:#143a3b;color:#b5fff0}
+.touch-pads button:nth-child(2){border-color:#7bbcff;background:#193752;color:#c8e2ff}
+.touch-pads button:nth-child(3){border-color:#ffc878;background:#42331e;color:#ffe4bb}
+.touch-pads b{display:block;font-size:64px;font-variant-numeric:tabular-nums}
+.touch-pads span{display:block;font-size:14px}
+.touch-stats{text-align:center;font-size:20px}.touch-stats b{color:var(--mint)}
+@media(max-height:760px) and (min-width:651px){.question-label,.stage-track{display:none}.question-card{padding:7px}.table-wrap{padding-top:0}.cell{height:32px}.keypad button{height:44px}.answer-controls .entry-display,.hint-button{height:32px}.completed-table-mini{padding:0}.review-table span{padding:1px}.review-table{font-size:19px}.operation-box{min-height:43px}.mini-footer{line-height:1.1}}

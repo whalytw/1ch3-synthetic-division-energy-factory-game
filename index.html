@@ -6,9 +6,10 @@
   <meta name="theme-color" content="#07141e">
   <meta name="description" content="三人同時、各自獨立練習完整綜合除法的觸控數學遊戲。">
   <title>綜合除法能源工廠｜三人獨立闖關</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="math.js" defer></script>
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=1.1.0">
+  <script src="math.js?v=1.1.0" defer></script>
+  <script src="touch-input.js?v=1.1.0" defer></script>
+  <script src="app.js?v=1.1.0" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -22,11 +23,12 @@
     </nav>
   </header>
   <main id="lanes" aria-label="三個獨立遊戲區"></main>
-  <footer class="app-footer"><span><i class="live-dot"></i>三區獨立運作 · 任一區結束即可換人</span><span id="footer-tip">找代入數 → 補齊係數 → 帶下・乘・加 → 整理商式與餘式</span></footer>
+  <footer class="app-footer"><span><i class="live-dot"></i>三區獨立運作 · v1.1 觸控優化版</span><span id="footer-tip">找代入數 → 補齊係數 → 帶下・乘・加 → 整理商式與餘式</span></footer>
   <dialog id="settings-dialog" class="modal">
     <form id="settings-form">
       <div class="modal-heading"><div><p class="eyebrow">TEACHER CONSOLE</p><h2>教師設定</h2></div><button type="button" data-close="settings-dialog" class="close-button" aria-label="關閉教師設定">×</button></div>
       <p class="modal-note">設定套用至下一回合。開啟設定或說明時，三區計時都會暫停。</p>
+      <button type="button" id="touch-test-btn" class="soft">三人觸控測試</button>
       <div class="settings-grid">
         <fieldset><legend>每回合題數</legend><div class="count-row"><label>★ 二次多項式<input name="count2" type="number" min="0" max="10" required></label><label>★★ 三次多項式<input name="count3" type="number" min="0" max="10" required></label><label>★★★ 四次多項式<input name="count4" type="number" min="0" max="10" required></label></div><label class="check"><input name="shuffle" type="checkbox">混合難度順序</label></fieldset>
         <fieldset><legend>作答與提示</legend><label>每題作答時間<select name="seconds"><option value="0">不限時</option><option value="60">60 秒</option><option value="90">90 秒</option><option value="120">120 秒</option><option value="180">180 秒</option><option value="240">240 秒</option><option value="300">300 秒</option><option value="420">420 秒</option><option value="600">600 秒</option></select></label><label>每題求救卡<select name="hints"><option value="0">0 張</option><option value="1">1 張</option><option value="2">2 張</option><option value="3">3 張</option></select></label><label class="check"><input name="guided" type="checkbox">顯示每一步的運算提示</label></fieldset>
@@ -36,6 +38,19 @@
       <p id="settings-error" class="form-error" role="alert"></p>
       <div class="modal-actions"><button type="button" id="defaults-btn" class="soft">恢復預設</button><button type="submit" class="primary">儲存設定</button></div>
     </form>
+  </dialog>
+  <dialog id="touch-dialog" class="modal touch-modal">
+    <div class="modal-heading"><h2>三人觸控測試</h2><button data-close="touch-dialog" class="close-button" aria-label="關閉觸控測試">×</button></div>
+    <p class="modal-note">三人各按一區：每按下一次，數字應立即加 1。接著三人同時按住，確認「最多同時觸點」是否達到 3。測試期間遊戲計時暫停。</p>
+    <div id="touch-pads" class="touch-pads">
+      <button data-action="test" data-pad="0">左區<b>0</b><span>次有效輸入</span></button>
+      <button data-action="test" data-pad="1">中區<b>0</b><span>次有效輸入</span></button>
+      <button data-action="test" data-pad="2">右區<b>0</b><span>次有效輸入</span></button>
+    </div>
+    <p class="touch-stats">目前觸點 <b id="touch-current">0</b> · 最多同時觸點 <b id="touch-max">0</b></p>
+    <p id="touch-source" class="small-copy">等待操作</p>
+    <p class="small-copy">這裡顯示網頁實際收到的觸控。若三人同時按住仍只有 1 點，或次數沒有增加，可用同一頁比較無線 Touchback 與有線 USB 觸控回傳。使用一般滑鼠測試時，不會顯示多個觸點。</p>
+    <button id="touch-reset" class="soft">重新計數</button>
   </dialog>
   <dialog id="guide-dialog" class="modal guide-modal">
     <div class="modal-heading"><div><p class="eyebrow">HOW TO PLAY</p><h2>讓每一格，都由你完成</h2></div><button data-close="guide-dialog" class="close-button" aria-label="關閉玩法說明">×</button></div>

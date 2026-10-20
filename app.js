@@ -48,6 +48,17 @@
   }
   function render(l) {
     const el = laneEl(l.id);
+    if (l.state === 'playing' && el.dataset.state === 'playing') {
+      $('.work-area', el).innerHTML = work(l);
+      updateEntry(l);
+      const hint = $('[data-action="hint"]', el);
+      hint.disabled = l.hintsUsed >= l.cfg.hints || l.hintedSteps.has(l.step);
+      hint.textContent = '✦ 求救卡 ' + (l.cfg.hints - l.hintsUsed);
+      $('.step-count', el).textContent = '完成 ' + l.step + ' / ' + l.tasks.length + ' 格';
+      $('.mistake-count', el).textContent = '本題答錯 ' + l.mistakes + ' 次';
+      return;
+    }
+    el.dataset.state = l.state;
     el.innerHTML = header(l) + (l.state === 'ready' ? ready(l) : l.state === 'playing' ? playing(l) : l.state === 'review' ? review(l) : done(l));
   }
   function ready(l) {
@@ -79,13 +90,17 @@
   }
   function remaining(l) { return l.cfg.seconds ? Math.max(0, (l.deadline - (pausedAt || Date.now())) / 1000) : 0; }
   function playing(l) {
-    const t = l.tasks[l.step], ins = M.instruction(t, l.q, l.cfg.guided), current = t.stage;
     let keypad = '';
     for (const [text, value, cls] of [['7', '7', ''], ['8', '8', ''], ['9', '9', ''], ['⌫', 'back', 'utility'], ['4', '4', ''], ['5', '5', ''], ['6', '6', ''], ['＋/−', 'sign', 'utility'], ['1', '1', ''], ['2', '2', ''], ['3', '3', ''], ['清除', 'clear', 'utility'], ['0', '0', 'zero'], ['確認 ↵', 'enter', 'confirm']]) keypad += '<button data-key="' + value + '" class="' + cls + '"' + (value === 'enter' && (!l.buffer || l.buffer === '-') ? ' disabled' : '') + '>' + text + '</button>';
+    return '<div class="lane-body playing-body"><div class="work-area">' + work(l) + '</div><div class="answer-controls"><div class="entry-display' + (!l.buffer ? ' empty' : '') + '" aria-label="目前輸入" aria-live="polite">' + (l.buffer ? num(l.buffer) : '輸入數字') + '</div><button data-action="hint" class="hint-button"' + (l.hintsUsed >= l.cfg.hints || l.hintedSteps.has(l.step) ? ' disabled' : '') + '>✦ 求救卡 ' + (l.cfg.hints - l.hintsUsed) + '</button></div><div class="keypad" aria-label="第' + (l.id + 1) + '區數字鍵盤">' + keypad + '</div><div class="mini-footer"><span class="step-count">完成 ' + l.step + ' / ' + l.tasks.length + ' 格</span><span class="mistake-count">本題答錯 ' + l.mistakes + ' 次</span><button class="text-button" style="padding:0;font-size:inherit" data-action="leave">結束本區</button></div></div>';
+  }
+  function work(l) {
+    const t = l.tasks[l.step], ins = M.instruction(t, l.q, l.cfg.guided), current = t.stage;
     const text = l.feedback ? l.feedback.title : ins[0];
     const sub = l.feedback ? l.feedback.sub : ins[1];
-    return '<div class="lane-body playing-body"><div class="question-line"><span><span class="stars">' + '★'.repeat(l.q.degree - 1) + '</span> 第 ' + (l.question + 1) + ' / ' + l.questions.length + ' 題</span><span class="pause-badge">' + (pausedAt ? '已暫停' : '') + '</span><b class="timer' + (l.cfg.seconds && remaining(l) < 30 ? ' urgent' : '') + '">' + (l.cfg.seconds ? duration(remaining(l)) : '不限時') + '</b></div><div class="question-card"><p class="question-label">完成下列綜合除法，求商式與餘式</p><div class="equation">(' + M.polynomial(l.q.a) + ') <span class="divisor-tag">÷ (' + M.divisor(l.q.c) + ')</span></div></div><div class="stage-track">' + ['代入數', '係數排列', '帶下・乘・加', '商式與餘式'].map((x, i) => '<span class="' + (i === current ? 'current' : i < current ? 'done' : '') + '">' + x + '</span>').join('') + '</div>' + (current === 3 ? '<div class="completed-table-mini">' + reviewTable(l.q) + '</div>' + output(l) : table(l)) + '<div class="energy-meter"><span style="width:' + (100 * l.step / l.tasks.length) + '%"></span></div><div class="operation-box ' + (l.feedback ? l.feedback.type : '') + '" aria-live="polite"><div class="operation-title">' + text + '</div><div class="operation-sub">' + sub + '</div></div><div class="answer-controls"><div class="entry-display' + (!l.buffer ? ' empty' : '') + '" aria-label="目前輸入" aria-live="polite">' + (l.buffer ? num(l.buffer) : '輸入數字') + '</div><button data-action="hint" class="hint-button"' + (l.hintsUsed >= l.cfg.hints || l.hintedSteps.has(l.step) ? ' disabled' : '') + '>✦ 求救卡 ' + (l.cfg.hints - l.hintsUsed) + '</button></div><div class="keypad" aria-label="第' + (l.id + 1) + '區數字鍵盤">' + keypad + '</div><div class="mini-footer"><span>完成 ' + l.step + ' / ' + l.tasks.length + ' 格</span><span>本題答錯 ' + l.mistakes + ' 次</span><button class="text-button" style="padding:0;font-size:inherit" data-action="leave">結束本區</button></div></div>';
+    return '<div class="question-line"><span><span class="stars">' + '★'.repeat(l.q.degree - 1) + '</span> 第 ' + (l.question + 1) + ' / ' + l.questions.length + ' 題</span><span class="pause-badge">' + (pausedAt ? '已暫停' : '') + '</span><b class="timer' + (l.cfg.seconds && remaining(l) < 30 ? ' urgent' : '') + '">' + (l.cfg.seconds ? duration(remaining(l)) : '不限時') + '</b></div><div class="question-card"><p class="question-label">完成下列綜合除法，求商式與餘式</p><div class="equation">(' + M.polynomial(l.q.a) + ') <span class="divisor-tag">÷ (' + M.divisor(l.q.c) + ')</span></div></div><div class="stage-track">' + ['代入數', '係數排列', '帶下・乘・加', '商式與餘式'].map((x, i) => '<span class="' + (i === current ? 'current' : i < current ? 'done' : '') + '">' + x + '</span>').join('') + '</div>' + (current === 3 ? '<div class="completed-table-mini">' + reviewTable(l.q) + '</div>' + output(l) : table(l)) + '<div class="energy-meter"><span style="width:' + (100 * l.step / l.tasks.length) + '%"></span></div><div class="operation-box ' + (l.feedback ? l.feedback.type : '') + '" aria-live="polite"><div class="operation-title">' + text + '</div><div class="operation-sub">' + sub + '</div></div>';
   }
+
   function reviewTable(q) {
     let s = '<div class="review-table" style="--cols:' + (q.degree + 1) + '">';
     s += q.a.map(v => '<span>' + num(v) + '</span>').join('') + '<span class="review-root">' + num(q.c) + '</span><span>↓</span>';
@@ -190,11 +205,10 @@
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })), a = document.createElement('a'); a.href = url; a.download = '綜合除法能源工廠_成績_' + new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' }) + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
   lanes.forEach(l => { const el = document.createElement('section'); el.className = 'lane'; el.id = 'lane-' + l.id; el.setAttribute('aria-label', '第 ' + (l.id + 1) + ' 區發電站'); dom.appendChild(el); render(l); });
-  dom.addEventListener('click', e => {
-    const section = e.target.closest('.lane'); if (!section) return;
+  window.ClassroomTouch.bind(dom, { activate(b) {
+    const section = b.closest('.lane'); if (!section) return;
     const l = lanes[Number(section.id.slice(5))]; keyboardLane = l.id;
-    const key = e.target.closest('[data-key]'); if (key && !key.disabled) { input(l, key.dataset.key); return; }
-    const b = e.target.closest('[data-action]'); if (!b || b.disabled) return;
+    if (b.dataset.key) { input(l, b.dataset.key); return; }
     const action = b.dataset.action;
     if (action === 'start') start(l);
     else if (action === 'demo') start(l, true);
@@ -203,10 +217,17 @@
     else if (action === 'again') start(l, false, true);
     else if (action === 'new-player') reset(l);
     else if (action === 'leave') { if (l.leaving) reset(l); else { l.leaving = true; b.textContent = '確定結束？'; setTimeout(() => { l.leaving = false; const button = $('[data-action="leave"]', laneEl(l.id)); if (button) button.textContent = '結束本區'; }, 2500); } }
+  } });
+  dom.addEventListener('pointerdown', e => {
+    const section = e.target.closest('.lane'); if (section) keyboardLane = Number(section.id.slice(5));
+  }, { passive: true });
+  dom.addEventListener('click', e => {
+    const section = e.target.closest('.lane'); if (section) keyboardLane = Number(section.id.slice(5));
   });
   dom.addEventListener('change', e => { if (e.target.matches('.seat-select')) { const l = lanes[Number(e.target.closest('.lane').id.slice(5))]; l.seat = e.target.value; } });
   document.addEventListener('keydown', e => {
     if ($('dialog[open]') || e.ctrlKey || e.metaKey || e.altKey || e.target.matches('select,input,textarea')) return;
+    if (e.target.matches('button') && (e.key === 'Enter' || e.key === ' ')) return;
     const keys = { Enter: 'enter', Backspace: 'back', Delete: 'clear', Escape: 'clear', '-': 'sign' };
     if (/^\d$/.test(e.key) || keys[e.key]) { if (lanes[keyboardLane].state === 'playing') { e.preventDefault(); input(lanes[keyboardLane], keys[e.key] || e.key); } }
   });
@@ -215,6 +236,25 @@
   $('#start-all').addEventListener('click', () => lanes.filter(l => l.state === 'ready').forEach(l => start(l)));
   $('#settings-btn').addEventListener('click', () => { populateForm(settings); openDialog('settings-dialog'); });
   $('#guide-btn').addEventListener('click', () => openDialog('guide-dialog'));
+  const touchCounts = [0, 0, 0]; let touchMax = 0;
+  window.ClassroomTouch.bind($('#touch-pads'), {
+    activate(button, event) {
+      $('b', button).textContent = ++touchCounts[Number(button.dataset.pad)];
+      const type = event.pointerType || (event.type === 'touchstart' ? 'touch' : 'click');
+      $('#touch-source').textContent = '最近輸入：' + ({ touch: '觸控', pen: '觸控筆', mouse: '滑鼠', click: '一般點擊／鍵盤' }[type] || type);
+    },
+    onContacts(contacts) {
+      const count = contacts.filter(p => p.type === 'touch' || p.type === 'pen').length;
+      touchMax = Math.max(touchMax, count);
+      $('#touch-current').textContent = count; $('#touch-max').textContent = touchMax;
+    }
+  });
+  $('#touch-test-btn').addEventListener('click', () => { openDialog('touch-dialog'); $('#settings-dialog').close(); });
+  $('#touch-reset').addEventListener('click', () => {
+    touchCounts.fill(0); $('#touch-pads').querySelectorAll('b').forEach(b => b.textContent = '0');
+    touchMax = Number($('#touch-current').textContent); $('#touch-max').textContent = touchMax;
+    $('#touch-source').textContent = '等待操作';
+  });
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => $('#' + b.dataset.close).close()));
   document.querySelectorAll('dialog').forEach(d => d.addEventListener('close', resume));
   $('#sound-btn').addEventListener('click', () => { sound = !sound; $('#sound-btn').textContent = '音效 ' + (sound ? '開' : '關'); $('#sound-btn').setAttribute('aria-pressed', String(sound)); beep('tap'); });

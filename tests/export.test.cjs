@@ -11,7 +11,7 @@ function element(id = '') {
 }
 const querySelector = key => { if (!elements.has(key)) elements.set(key, element(key)); return elements.get(key); };
 const record = { time: '2026-10-20T06:00:00.000Z', station: 2, seat: '7', score: 120, completed: 1, total: 1, timeouts: 0, attempts: 12, correct: 12, hints: 0, seconds: 37 };
-const context = { window: { DivisionMath: M }, document: { querySelector, querySelectorAll() { return []; }, createElement() { return element(); }, addEventListener() {} }, localStorage: { getItem(key) { return key.endsWith(':records') ? JSON.stringify([record]) : null; }, setItem() {} }, structuredClone, setInterval() {}, setTimeout() {}, clearTimeout() {}, Blob, URL: { createObjectURL(blob) { exported = blob; return 'blob:unit-test'; }, revokeObjectURL() {} }, Date, Math };
+const context = { window: { DivisionMath: M, ClassroomTouch: { bind() {} } }, document: { querySelector, querySelectorAll() { return []; }, createElement() { return element(); }, addEventListener() {} }, localStorage: { getItem(key) { return key.endsWith(':records') ? JSON.stringify([record]) : null; }, setItem() {} }, structuredClone, setInterval() {}, setTimeout() {}, clearTimeout() {}, Blob, URL: { createObjectURL(blob) { exported = blob; return 'blob:unit-test'; }, revokeObjectURL() {} }, Date, Math };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, root, 'app.js'), 'utf8'), context);
 querySelector('#export-btn').listeners.click();
 (async () => {
